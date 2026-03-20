@@ -1,0 +1,384 @@
+# **=============================== 配置文件来源信息 ===============================**
+# 作者 Kerronex 地址 https://github.com/HenryChiao/MIHOMO_YAMLS/tree/main/THEYAMLS/General_Config
+# 无DNS泄露，
+# 关闭ipv6
+# 开启fakeip，无DNS泄露防护极强，适配tun模式，极少数老旧软件或特定游戏会检查 IP 地址是否合法（比如觉得 198.18 开头的 IP 很奇怪），导致无法联网。普通用户： 强烈建议使用 fake-ip。它能提供最顺滑的上网体验，并且极大程度避免了 DNS 泄露和污染问题。
+# 机场订阅模块如有问题，参考 Clash Verge REV-cvr配置文件
+
+# **=============================== 机场订阅方法01 ===============================**
+# 缺点：在Clash Meta for Android无法显示延迟
+# 此方法极度简洁： 如果你有 10 个机场，只需要修改 subComm 里的健康检查地址，所有机场都会同步修改。节点辨识度高
+# 定义了一个名为 subComm 的公共参数池。包含了所有机场通用的设置
+subComm: &subComm
+  type: http # 订阅是通过网址（HTTP/HTTPS）下载的。
+  udp: true # 强制开启该机场所有节点的 UDP 功能。
+  interval: 86400 # 订阅更新频率（单位：秒）。这里是 24 小时更新一次节点列表
+  proxy: 直连 # 下载订阅包设为“直连”表示不走代理，用你本地网络下载。
+  # lazy: true # true 或 false,懒加载。如果你还没点开这个机场的节点，Clash 连节点列表都不会去解析，非常省内存。
+  # 节点健康延迟检测health-check
+  health-check:
+    enable: true
+    interval: 600 # 测速频率（单位：秒）
+    url: http://www.gstatic.com/generate_204 # 模拟访问这个地址，看节点能不能通。
+    # url: https://cp.cloudflare.com/generate_204
+    # url: http://latency-test.skk.moe/endpoint
+    # lazy: true # true 或 false,懒加载。它的含义是：“只有当我选了这个机场的节点组时，才开始测速”。如果你一直没切换过去，它就会一直显示为 No Data。
+    # expected-status: '204' # 检测速度慢，这是一种严格体检。要求靶点必须返回 204 状态码才算健康，如果返回了 200（可能被酒店 Wi-Fi 拦截了），也会判定失败。
+    # method: HEAD # 检测速度慢，method: HEAD 或者 method: GET. HEAD只看文件头，不下载内容 最轻量。GET 把返回信息看一遍。更重一点，但兼容性更好，有些节点不支持
+    # timeout: 5 # 超时时间（单位：秒），会导致延迟不显示
+    
+# subAll / subMain是“逻辑分组”的引用。你可以直接在后面的代理组里引用 *subAll，它就会自动包含 s1 和 s2 的所有节点。增加机场订阅use后加s3,s4.名字和下方机场proxy-providers:s1 保持一致
+
+subAll: &subAll # **所有订阅组引用**
+  use:
+    - s1
+    - s2
+
+subMain: &subMain # **主用订阅组引用**
+  use:
+    - s1
+
+# **各种代理提供者（机场）的订阅配置**，additional-prefix: 's1 »' (核心亮点)： 给节点的名称自动加上前缀。 如果机场1有个节点“香港 01”，显示在手机上会变成“s1 » 香港 01”。 path: ./proxy_provider/s1.yaml： 明确指定了下载后的订阅文件存在手机里的哪个位置。
+proxy-providers:
+  s1:
+    url: "替换为机场订阅地址01"
+    path: ./proxy_provider/s1.yaml
+    <<: *subComm
+    override:
+      additional-prefix: 's1 »'
+
+  s2:
+    url: "替换为机场订阅地址02"
+    path: ./proxy_provider/s2.yaml
+    <<: *subComm
+    override:
+      additional-prefix: 's2 »'
+
+
+
+
+# **=============================== 节点信息 ===============================**
+# 在代理面板或代理工具 复制自建节点信息---在自有服务 Sublink Worker 分享链接内 粘贴节点信息，关闭高级选项，转换， 再shorten link生成短链---复制Clash Link地址 浏览器访问clash link地址，文档中找到 proxies 模块即为yaml格式节点信息，
+# 添加节点时需要额外添加 udp: true
+proxies:
+  - { name: 直连, type: direct, udp: true } # 不要删除
+# 在下面添加自建节点信息yaml格式
+
+
+# **=============================== 通用设置 ===============================**
+# 影响全局网络和系统的配置
+# 设置代理监听的端口、系统参数等
+# 控制代理如何与系统交互
+port: 7890
+socks-port: 7891 # SOCKS5 代理端口
+mixed-port: 7892 # HTTP(S) 和 SOCKS 代理混合端口
+allow-lan: true # 允许局域网连接
+mode: rule # 分流模式（核心）。根据你在 rules 里的规则分流，国内直连，国外代理。
+bind-address: '*' # 绑定 IP 地址，仅作用于 allow-lan 为 true，'*'表示所有地址
+ipv6: false
+unified-delay: true # 更换延迟计算方式，去除握手等额外延迟
+tcp-concurrent: true # 启用 TCP 并发连接。这允许 Clash 同时建立多个 TCP 连接，可以提高网络性能和连接速度
+log-level: info # 查东西时改成info
+find-process-mode: 'strict' # 设置进程查找模式为严格模式，Clash 会更精确地识别和匹配网络流量来源的进程.控制是否让 Clash 去匹配进程,always 开启，强制匹配所有进程,strict 默认，由 Clash 判断是否开启,off 不匹配进程，推荐在路由器上使用此模式
+global-client-fingerprint: chrome # 设置全局客户端指纹为 Chrome，使 Clash 在建立连接时模拟 Chrome 浏览器的 TLS 指纹，增强隐私性和绕过某些网站的指纹检测
+keep-alive-idle: 600 # 空闲连接保持。如果一个连接 600 秒没动静才断开，减少频繁重新握手的耗电。
+keep-alive-interval: 15 # 心跳包间隔。每 15 秒发个小包保活，防止被网络运营商强行掐断。
+
+# **=============================== 控制面板UI界面 ===============================**
+# 远程控制与图形界面”模块。打开代理自动下载UI界面，下载完成可访问。
+# 手机浏览器访问 127.0.0.1:9090/ui  密码是secret 
+
+external-controller: 127.0.0.1:9090 # 开启一个 API 控制端口。监听在 9090 端口。所有的 UI 界面都是通过这个端口发指令给Clash 
+secret: '123456' # 控制台的密码。
+external-ui: './ui' # 界面文件的存放目录。
+external-ui-url: 'https://github.com/MetaCubeX/metacubexd/releases/latest/download/compressed-dist.tgz' # UI 文件的下载地址。
+
+
+# **=============================== GEO 数据库配置 ===============================**
+# 该配置用于加载地理位置信息数据库，包括 IP 和域名的地理位置数据
+# 在不同的规则配置中，可以使用地理信息进行更精确的流量路由
+
+# GEO 数据库模式配置，启用该功能以获取和使用地理位置信息。传统的 Clash 仅支持较老的 mmdb 格式。开启此项后，内核会优先使用功能更强大、更新更频繁的 geoip.dat 和 geosite.dat 文件。这让你的规则支持类似 geosite:google 这样更高级的写法。
+geodata-mode: true
+
+# GEO 数据库加载模式，选择合适的内存占用策略
+# geodata-loader: standard（标准）：将整个数据库加载到内存。读取速度最快，但会占用约 50-100MB 内存。 geodata-loader: memconservative（节省内存）：按需读取，不常驻内存。适合内存非常小的老旧安卓机，但匹配规则时会有轻微延迟。
+geodata-loader: memconservative
+
+# 是否自动更新 GEO 数据库，默认每48小时更新一次
+geo-auto-update: true
+# GEO 数据库更新间隔时间，单位：小时
+geo-update-interval: 24
+
+# GEO 数据库文件下载地址配置，提供各类 GEO 数据文件的 URL，确保实时更新
+geox-url:
+  geoip: 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat'
+  geosite: 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat'
+  metadb: 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb'
+  asn: 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb'
+  country: 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/country.mmdb'
+
+
+
+disable-keep-alive: false
+
+# **=============================== DNS 配置 ===============================**
+dns:
+  enable: true
+  ipv6: false
+  listen: 0.0.0.0:1053
+  prefer-h3: true # 如果DNS服务器支持DoH3会优先使用h3，提升性能
+  respect-rules: true # 让 DNS 解析遵循 Clash 的路由规则
+  cache-algorithm: arc # 使用性能更优的 ARC 缓存算法，默认 lru
+  cache-size: 2048 # 限制缓存大小，避免占用过多内存
+
+  use-hosts: true # 使用hosts，减少不必要的 DNS 查询，提高速度。指的是 Clash 配置文件中如果有一段 hosts: 映射（虽然你提供的片段里没写，但内核支持），Clash 会优先从中读取 IP。
+  use-system-hosts: true # 使用系统hosts，兼容系统层面的域名屏蔽或重定向。指的是 Clash 会去读取 Android 系统自身的 hosts 文件（通常位于 /system/etc/hosts）。如果你在系统层面屏蔽了某些广告域名或指定了某个服务器 IP，这里开启后 Clash 会直接采用，不再去询问 DNS 服务器。
+
+  # enhanced-mode：redir-host 关闭fakeip。enhanced-mode: fake-ip 启用 Fake-IP ，强制劫持所有 DNS 请求的关键。
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  # Fake-IP 过滤器：确保国内域名不被 Fake-IP 转换。
+  fake-ip-filter-mode: blacklist
+  fake-ip-filter:
+    - 'geosite:connectivity-check'
+    - 'geosite:private'
+    - 'rule-set:fake_ip_filter_DustinWin'
+    
+  # 启动引导”DNS 专门用于解析其他 DoH 服务器的域名
+  default-nameserver:
+    - 8.8.8.8
+    - 8.8.4.4
+
+  # 默认 DNS, 供所有请求使用
+  nameserver:
+    - https://8.8.8.8/dns-query
+    - https://8.8.4.4/dns-query
+    - 8.8.8.8
+    - 8.8.4.4
+    # - 223.5.5.5
+    # - 119.29.29.29
+  
+  # 用于针对特定域名或域名组指定特定的 DNS 服务器进行解析，从而实现 DNS 分流、提升解析速度或解决国内网站解析错误的问题。 
+  nameserver-policy:
+    'geosite:cn,private': # 国内域名和私有域名强制走国内 DNS
+      - https://223.5.5.5/dns-query#h3=true
+      - https://dns.alidns.com/dns-query
+      - https://223.5.5.5/dns-query
+    'geo:cn':
+      - https://223.5.5.5/dns-query#h3=true
+      - https://dns.alidns.com/dns-query
+      - https://223.5.5.5/dns-query
+    'geosite:geolocation-!cn': # 强制国外流量不走国内 DNS，防止被运营商污染或检测
+      - https://dns.google/dns-query
+
+  # 用于代理服务器自身的 DNS 解析，节点解析DNS专门用于解析你机场订阅里那些服务器的域名IP
+  proxy-server-nameserver:
+    - https://8.8.8.8/dns-query
+    - 8.8.8.8
+    - 8.8.4.4
+    
+
+
+# **=============================== 规则选择缓存 ===============================**
+# 对“全局模式（Global）”和“规则模式（Rule）”都生效。只要涉及到“手动选择节点”，这个功能就会起作用。
+
+profile:
+  store-selected: true # 记忆节点选择。非常重要！重启 App 后，它会恢复上次手动选的节点，不用每次重新选。
+  store-fake-ip: true # true为记忆fakeip，false不记忆fakeip。如果DNS 是 enhanced-mode: redir-host 那么这行配置就不起作用。因为根本不产生 Fake-IP。
+
+# **=============================== TUN 配置 ===============================**
+# 配置 TUN 模式，适用于透明代理和高效流量转发
+# TUN虚拟网卡模式，强制接管手机上所有 App 的流量，
+
+tun:
+  enable: false # ture为开启，false为关闭，tun虚拟网卡模式，强制接管手机上所有 App 的流量，
+  stack: mixed # 协议栈类型。三种可选system/gvisor/mixed，system: 使用系统自带协议栈，性能高但兼容性稍弱。gvisor: 在用户态模拟网络环境，兼容性极佳但略耗 CPU。mixed: 推荐选择。结合两者优点，自动分配。
+  auto-route: true # 自动设置系统路由表，确保流量能够自动流向这张虚拟网卡。
+  auto-redirect: true # 自动重定向流量。
+  auto-detect-interface: true # 自动检测出站网卡，开启后，会自动追踪系统当前默认的物理网卡。
+  strict-route: true # 避免冗余路由污染系统表，严格路由模式。开启后可以有效防止流量绕过代理（漏气）或产生回环，也能让系统路由表更干净。
+  # DNS劫持。强制把发往 any:53（任何 53 端口）的 DNS 请求抓取到 Clash 内部处理。这是防止 DNS 污染和实现分流的关键。
+  dns-hijack:
+    - any:53
+    - tcp://any:53
+  mtu: 1500 # 减少 MTU 问题，如网页无法打开、测速慢
+  gso: true # 启用通用分段卸载（提升性能）
+  gso-max-size: 65536 # 通用分段卸载的最大包尺寸 65536（64KB）是标准的上限。它允许Clash在将数据交给网卡之前，先攒成一个大包，让硬件去处理分段。效果：显著降低 CPU 占用率。省电
+  udp-timeout: 300 # UDP 会话保持时间
+
+# **=============================== 域名嗅探 ===============================**
+
+sniffer:
+  enable: true # ture为开启，false为关闭。当关闭 Fake-IP 后，没有它，绝大部分分流规则（基于域名的）都会失效。
+  force-dns-mapping: true # 将嗅探到的域名与 IP 进行强制映射，提高后续匹配速度。
+  parse-pure-ip: true # 即使 App 直接通过 IP 访问（不经过 DNS 过程），嗅探器也会尝试解析出背后的域名。
+  override-destination: true # 核心功能。将嗅探到的真实域名作为最终的目标地址，修复那些因为 IP 变动导致的分流错误。
+  # sniff模块:定义了要嗅探的协议（HTTP、TLS、QUIC）及其对应端口。QUIC的443端口也被列入，这主要是为了处理 YouTube 等使用 HTTP/3 协议的流量。
+  sniff:
+    HTTP:
+      ports:
+        - 80
+        - 8080-8880
+      override-destination: true
+    TLS:
+      ports:
+        - 443
+        - 8443
+    QUIC:
+      ports:
+        - 443
+        - 8443
+  # 强制域名映射（嗅探增强），只要流量的目标地址（域名）符合这个名单，Clash 就会无视一切干扰，强制进行流量嗅探。 如果某个 App 尝试用一个未知的 IP 偷偷访问 v2ex，Clash 可能会因为没认出来而让它走“直连”。开启后Clash 会强行通过数据包里的证书信息（SNI）确认对方身份，防止域名或地址换ip导致分流错误。     
+  force-domain:
+    - +.v2ex.com
+  # 跳过名单。比如 Mijia Cloud（米家）或 Apple 推送，这些服务如果被强行改变目标地址，可能会导致消息推送延迟或设备离线。  
+  skip-domain:
+    - Mijia Cloud
+    - +.push.apple.com
+  # 来自这些局域网 IP 的请求不嗅探。  
+  skip-src-address:
+    - 192.168.1.1/24
+    - 192.168.66.1/24
+  # 发往这些 IP 的请求不嗅探（比如 Telegram 的官方 IP 段，本身就非常稳定，不需要再嗅探还原域名）。  
+  skip-dst-address:
+    - 91.105.192.0/23
+    - 91.108.4.0/22
+    - 91.108.8.0/21
+    - 91.108.16.0/21
+    - 91.108.56.0/22
+    - 95.161.64.0/20
+    - 149.154.160.0/20
+    - 185.76.151.0/24
+    - 2001:67c:4e8::/48
+    - 2001:b28:f23c::/47
+    - 2001:b28:f23f::/48
+    - 2a0a:f280:203::/48
+
+
+# **=============================== 代理组设置 ===============================**
+# 代理组用于管理不同代理的分类和调度策略
+# 代理组前的图标如不正确，会影响分流。如us图标，在cmfa中无法被识别，会分流失效无法联网。
+
+UrlTest: &urltest {type: url-test, interval: 6, tolerance: 20, lazy: true, url: http://www.gstatic.com/generate_204, disable-udp: false, timeout: 2000, max-failed-times: 3, hidden: false}
+FallBack: &fallback {type: fallback, interval: 6, lazy: true, url: http://www.gstatic.com/generate_204, disable-udp: false, timeout: 2000, max-failed-times: 3, hidden: false}
+LoadBalance: {type: load-balance, interval: 6, lazy: true, url: http://www.gstatic.com/generate_204, disable-udp: false, strategy: consistent-hashing, timeout: 2000, max-failed-times: 3, hidden: false}
+
+# 代理组
+proxy-groups:
+  - {name: 🌐 全部节点, type: select, <<: *subAll, include-all: true}
+  - {name: 🚀 默认代理, type: select, proxies: [直连, 🌐 全部节点, 🦅 美国节点, 🏠 家宽节点, 🇯🇵 日本节点, 🇹🇼 台湾节点, 🇭🇰 香港节点, 🇸🇬 狮城节点]}
+  - {name: 🐟 漏网之鱼, type: select, proxies: [直连, 🌐 全部节点, 🦅 美国节点, 🏠 家宽节点, 🇯🇵 日本节点, 🇹🇼 台湾节点, 🇭🇰 香港节点, 🇸🇬 狮城节点]}
+  - {name: 📲 X推特, type: select, proxies: [直连, 🌐 全部节点, 🦅 美国节点, 🏠 家宽节点, 🇯🇵 日本节点, 🇹🇼 台湾节点, 🇭🇰 香港节点, 🇸🇬 狮城节点]}
+  - {name: 🤖 Gemini, type: select, proxies: [直连, 🌐 全部节点, 🦅 美国节点, 🏠 家宽节点, 🇯🇵 日本节点, 🇹🇼 台湾节点, 🇭🇰 香港节点, 🇸🇬 狮城节点]}
+  - {name: 🤖 OpenAI, type: select, proxies: [直连, 🌐 全部节点, 🦅 美国节点, 🏠 家宽节点, 🇯🇵 日本节点, 🇹🇼 台湾节点, 🇭🇰 香港节点, 🇸🇬 狮城节点]}
+  - {name: 💰 币安, type: select, proxies: [直连, 🌐 全部节点, 🦅 美国节点, 🏠 家宽节点, 🇯🇵 日本节点, 🇹🇼 台湾节点, 🇭🇰 香港节点, 🇸🇬 狮城节点]}
+  - {name: 💰 欧易, type: select, proxies: [直连, 🌐 全部节点, 🦅 美国节点, 🏠 家宽节点, 🇯🇵 日本节点, 🇹🇼 台湾节点, 🇭🇰 香港节点, 🇸🇬 狮城节点]}
+  - {name: 📹 YouTube, type: select, proxies: [直连, 🌐 全部节点, 🦅 美国节点, 🏠 家宽节点, 🇯🇵 日本节点, 🇹🇼 台湾节点, 🇭🇰 香港节点, 🇸🇬 狮城节点]}
+  - {name: 🍀 Google, type: select, proxies: [直连, 🌐 全部节点, 🦅 美国节点, 🏠 家宽节点, 🇯🇵 日本节点, 🇹🇼 台湾节点, 🇭🇰 香港节点, 🇸🇬 狮城节点]}
+  - {name: 👨🏿‍💻 GitHub, type: select, proxies: [直连, 🌐 全部节点, 🦅 美国节点, 🏠 家宽节点, 🇯🇵 日本节点, 🇹🇼 台湾节点, 🇭🇰 香港节点, 🇸🇬 狮城节点]}
+  - {name: 🐬 OneDrive, type: select, proxies: [直连, 🌐 全部节点, 🦅 美国节点, 🏠 家宽节点, 🇯🇵 日本节点, 🇹🇼 台湾节点, 🇭🇰 香港节点, 🇸🇬 狮城节点]}
+  - {name: 🪟 Microsoft, type: select, proxies: [直连, 🌐 全部节点, 🦅 美国节点, 🏠 家宽节点, 🇯🇵 日本节点, 🇹🇼 台湾节点, 🇭🇰 香港节点, 🇸🇬 狮城节点]}
+  - {name: 🎵 TikTok, type: select, proxies: [直连, 🌐 全部节点, 🦅 美国节点, 🏠 家宽节点, 🇯🇵 日本节点, 🇹🇼 台湾节点, 🇭🇰 香港节点, 🇸🇬 狮城节点]}
+  - {name: 📲 Telegram, type: select, proxies: [直连, 🌐 全部节点, 🦅 美国节点, 🏠 家宽节点, 🇯🇵 日本节点, 🇹🇼 台湾节点, 🇭🇰 香港节点, 🇸🇬 狮城节点]}
+  - {name: 🎥 NETFLIX, type: select, proxies: [直连, 🌐 全部节点, 🦅 美国节点, 🏠 家宽节点, 🇯🇵 日本节点, 🇹🇼 台湾节点, 🇭🇰 香港节点, 🇸🇬 狮城节点]}
+  - {name: 💶 PayPal, type: select, proxies: [直连, 🌐 全部节点, 🦅 美国节点, 🏠 家宽节点, 🇯🇵 日本节点, 🇹🇼 台湾节点, 🇭🇰 香港节点, 🇸🇬 狮城节点]}
+  - {name: 🍎 苹果服务, type: select, proxies: [直连, 🌐 全部节点, 🦅 美国节点, 🏠 家宽节点, 🇯🇵 日本节点, 🇹🇼 台湾节点, 🇭🇰 香港节点, 🇸🇬 狮城节点]}
+  - {name: 🦅 美国节点, type: select, <<: *subAll, include-all: true, filter: "(?=.*(美|US|(?i)States|America))^((?!(港|台|韩|新|日)).)*$"}
+  - {name: 🏠 家宽节点, type: select, <<: *subAll, include-all: true, filter: "家宽|(?i)ISP"}
+  - {name: 🇹🇼 台湾节点, type: select, <<: *subAll, include-all: true, filter: "(?=.*(台|台湾|(?i)TW|(?i)Tai))^((?!(港|日|韩|新|深|美)).)*$"} 
+  - {name: 🇯🇵 日本节点, type: select, <<: *subAll, include-all: true, filter: "(?=.*(日|JP|(?i)Japan))^((?!(港|台|韩|新|美)).)*$"}
+  - {name: 🇭🇰 香港节点, type: select, <<: *subAll, include-all: true, filter: "(?=.*(港|HK|(?i)Hong))^((?!(台|日|韩|新|深|美)).)*$"}
+  - {name: 🇸🇬 狮城节点, type: select, <<: *subAll, include-all: true, filter: "(?=.*(新加坡|坡|狮城|SG|Singapore))^((?!(台|日|韩|深|美)).)*$"}
+
+
+
+# **=============================== 路由规则 ===============================**
+#  规则前后顺序影响分流结果
+
+rules:
+  # 拒绝/阻止类规则 (最高优先级，直接拦截)
+  # 有些规则不涉及 DNS 解析，直接拒绝，应放在最前面，以阻止不必要的流量。
+  - RULE-SET,AWAvenue_Ads_Rule,REJECT # 秋风广告过滤
+  
+  - DOMAIN-SUFFIX,ip.sb,🏠 家宽节点
+  - DOMAIN-SUFFIX,grok.com,🏠 家宽节点
+  - DOMAIN-SUFFIX,x.ai,🏠 家宽节点
+
+  - RULE-SET,proxylite_class,🚀 默认代理
+  - RULE-SET,twitter_class,📲 X推特
+  - RULE-SET,google-gemini_class,🤖 Gemini
+  - RULE-SET,openai_class,🤖 OpenAI  
+  - RULE-SET,binance_class,💰 币安
+  - RULE-SET,okx_class,💰 欧易
+  - RULE-SET,github_domain,👨🏿‍💻 GitHub
+  - RULE-SET,youtube_domain,📹 YouTube
+  - RULE-SET,google_domain,🍀 Google
+  - RULE-SET,google_ip,🍀 Google
+  - RULE-SET,onedrive_domain,🐬 OneDrive
+  - RULE-SET,microsoft_domain,🪟 Microsoft
+  - RULE-SET,tiktok_domain,🎵 TikTok
+  - RULE-SET,telegram_domain,📲 Telegram
+  - RULE-SET,telegram_ip,📲 Telegram
+  - RULE-SET,netflix_domain,🎥 NETFLIX
+  - RULE-SET,netflix_ip,🎥 NETFLIX
+  - RULE-SET,paypal_domain,💶 PayPal
+  - RULE-SET,apple_domain,🍎 苹果服务
+  - RULE-SET,apple_ip,🍎 苹果服务
+  - RULE-SET,geolocation-!cn,🚀 默认代理
+
+  - RULE-SET,private_ip,直连,no-resolve
+  - RULE-SET,private_domain,直连
+  - DOMAIN-SUFFIX,cn,直连  
+  - RULE-SET,cn_domain,直连
+  - RULE-SET,cn_ip,直连  
+  - DOMAIN-SUFFIX,download.nvidia.com,直连
+  - GEOSITE,category-games@cn,直连
+  - RULE-SET,blackmatrix7_direct,直连
+
+  - MATCH,🐟 漏网之鱼
+  
+  
+# **=============================== 规则集 ===============================**
+# 注意锚点必须放在引用的上方，可以集中把锚点全部放yaml的顶部。
+## type：可选http/file/inline  behavior：可选domain/ipcidr/classical format：可选yaml/text/mrs
+
+rule-anchor:
+  ip: &ip {type: http, interval: 86400, behavior: ipcidr, format: mrs}
+  domain: &domain {type: http, interval: 86400, behavior: domain, format: mrs}
+  class: &class {type: http, interval: 86400, behavior: classical, format: text}
+  yaml: &yaml {type: http, interval: 86400, behavior: classical, format: yaml}
+
+rule-providers: 
+  # 广告过滤                                         
+  AWAvenue_Ads_Rule: { <<: *yaml, url: 'https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Clash.yaml' }
+  fake_ip_filter_DustinWin: { <<: *domain, url: 'https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/fakeip-filter.mrs' }
+  blackmatrix7_direct: { <<: *class, url: 'https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/Direct/Direct.list' }                                            
+  
+  private_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/private.mrs"}
+  proxylite_class: { <<: *class, url: "https://raw.githubusercontent.com/qichiyuhub/rule/refs/heads/main/proxy.list"}
+  twitter_class: { <<: *class, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/twitter.list" }
+  google-gemini_class: { <<: *class, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/google-gemini.list" }
+  openai_class: { <<: *class, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/openai.list" }
+  binance_class: { <<: *class, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/binance.list" }
+  okx_class: { <<: *class, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/meta/geo/geosite/okx.list" }
+  ai: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/category-ai-!cn.mrs" }
+  youtube_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/youtube.mrs"}
+  google_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/google.mrs"}
+  github_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/github.mrs"}
+  telegram_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/telegram.mrs"}
+  netflix_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/netflix.mrs"}
+  paypal_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/paypal.mrs"}
+  onedrive_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/onedrive.mrs"}
+  microsoft_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/microsoft.mrs"}
+  apple_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/apple.mrs"}
+  speedtest_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/ookla-speedtest.mrs"}
+  tiktok_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/tiktok.mrs"}
+  geolocation-!cn: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/geolocation-!cn.mrs"}
+  cn_domain: { <<: *domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/cn.mrs"}
+  private_ip: {<<: *ip, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/private.mrs"}
+  cn_ip: { <<: *ip, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/cn.mrs"}
+  google_ip: { <<: *ip, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/google.mrs"}
+  telegram_ip: { <<: *ip, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/telegram.mrs"}
+  netflix_ip: { <<: *ip, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/netflix.mrs"}
+  apple_ip: {<<: *ip, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo-lite/geoip/apple.mrs"}
