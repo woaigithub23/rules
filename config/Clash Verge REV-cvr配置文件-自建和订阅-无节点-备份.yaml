@@ -322,7 +322,7 @@ rules:
   - RULE-SET,lark,📚Lark文档
   
 
-  - RULE-SET,x,📲推特Grok
+  # - RULE-SET,x,📲推特Grok
   - RULE-SET,twitter,📲推特Grok
   - RULE-SET,twitter_ip,📲推特Grok,no-resolve
   # - RULE-SET,facebook,📲Facebook
@@ -455,7 +455,7 @@ rule-providers:
 
 
   # 社交软件规则
-  x: { <<: *mrs-domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/x.mrs" }
+  # x规则包含twitter和xai，这里重复 x: { <<: *mrs-domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/x.mrs" }
   twitter: { <<: *mrs-domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/twitter.mrs" }
   twitter_ip: { <<: *mrs-ipcidr, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/twitter.mrs" }
   telegram: { <<: *mrs-domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/telegram.mrs"}
