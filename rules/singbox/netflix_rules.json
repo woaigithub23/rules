@@ -1,0 +1,9 @@
+[
+  {
+    "tag": "netflix_rules",
+    "type": "remote",
+    "format": "binary",
+    "url": "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/sing-box/geosite/netflix.srs",
+    "download_detour": "proxy"
+  }
+]
