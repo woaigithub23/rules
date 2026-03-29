@@ -1,4 +1,6 @@
 #自定义直连域名
+# 测速
++.speedtest.im
 #重要网络服务商
 +.linode.com
 +.akamai.com
@@ -79,3 +81,5 @@
 +.lzpanx.com
 +.qianfan.app
 +.pan.qianfan.app
+
+
