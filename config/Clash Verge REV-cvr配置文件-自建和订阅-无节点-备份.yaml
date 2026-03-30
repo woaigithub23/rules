@@ -230,8 +230,10 @@ proxy-groups:
   - {name: "🤖Gemini", type: select, proxies: ["🚀默认代理", "🦅美国节点", "🏠家宽节点", "🇯🇵日本节点", "🇹🇼台湾节点", "🇭🇰香港节点", "🇸🇬狮城节点"]}
   - {name: "📚Lark文档", type: select, proxies: ["🚀默认代理", "🦅美国节点", "🏠家宽节点", "🇯🇵日本节点", "🇹🇼台湾节点", "🇭🇰香港节点", "🇸🇬狮城节点"]}
   - {name: "📲推特Grok", type: select, proxies: ["🚀默认代理", "🦅美国节点", "🏠家宽节点", "🇯🇵日本节点", "🇹🇼台湾节点", "🇭🇰香港节点", "🇸🇬狮城节点"]}
-  - {name: "🎵Spotify", type: select, proxies: ["🚀默认代理", "🦅美国节点", "🏠家宽节点", "🇯🇵日本节点", "🇹🇼台湾节点", "🇭🇰香港节点", "🇸🇬狮城节点"]}
   - {name: "📲Telegram", type: select, proxies: ["🚀默认代理", "🦅美国节点", "🏠家宽节点", "🇯🇵日本节点", "🇹🇼台湾节点", "🇭🇰香港节点", "🇸🇬狮城节点"]}
+  - {name: "📲Facebook", type: select, proxies: ["🚀默认代理", "🦅美国节点", "🏠家宽节点", "🇯🇵日本节点", "🇹🇼台湾节点", "🇭🇰香港节点", "🇸🇬狮城节点"]}
+  - {name: "📲Instagram", type: select, proxies: ["🚀默认代理", "🦅美国节点", "🏠家宽节点", "🇯🇵日本节点", "🇹🇼台湾节点", "🇭🇰香港节点", "🇸🇬狮城节点"]}
+  - {name: "🎵Spotify", type: select, proxies: ["🚀默认代理", "🦅美国节点", "🏠家宽节点", "🇯🇵日本节点", "🇹🇼台湾节点", "🇭🇰香港节点", "🇸🇬狮城节点"]}
   - {name: "🤖OpenAI", type: select, proxies: ["🚀默认代理",  "🦅美国节点", "🏠家宽节点", "🇯🇵日本节点", "🇹🇼台湾节点", "🇭🇰香港节点", "🇸🇬狮城节点"]}
   - {name: "🤖字节海外AI", type: select, proxies: ["🚀默认代理", "🦅美国节点", "🏠家宽节点", "🇯🇵日本节点", "🇹🇼台湾节点", "🇭🇰香港节点", "🇸🇬狮城节点"]}
   - {name: "💶PayPal", type: select, proxies: ["直连", "🦅美国节点", "🏠家宽节点", "🇯🇵日本节点", "🇹🇼台湾节点", "🇭🇰香港节点", "🇸🇬狮城节点"]}
@@ -265,7 +267,7 @@ rules:
   # 域名代理
   - DOMAIN-SUFFIX,ip.sb,🏠家宽节点
   - RULE-SET,custom_direct_domain,直连
-  # - DOMAIN-SUFFIX,browserleaks.com,🚀默认代理  
+  # - DOMAIN-SUFFIX,browserleaks.com,🚀默认代理
 
   # 局域网（LAN）与私有网络专用域名
   - RULE-SET,private,直连
@@ -317,13 +319,18 @@ rules:
   - RULE-SET,github,🚀默认代理
   - RULE-SET,spotify,🎵Spotify
   - RULE-SET,lark,📚Lark文档
-  
+  - RULE-SET,notion,🚀默认代理
+  - RULE-SET,canva,🚀默认代理
+
 
   # - RULE-SET,x,📲推特Grok
   - RULE-SET,twitter,📲推特Grok
-  # - RULE-SET,facebook,📲Facebook
+  - RULE-SET,facebook,📲Facebook
+  - RULE-SET,instagram,📲Instagram
   - RULE-SET,telegram,📲Telegram
   - RULE-SET,reddit,🚀默认代理
+  - RULE-SET,quora,🚀默认代理
+
 
   # 其他海外服务
   # - RULE-SET,netflix,🎥NETFLIX
@@ -342,7 +349,7 @@ rules:
   - RULE-SET,google_ip,🔍Google,no-resolve
   - RULE-SET,twitter_ip,📲推特Grok,no-resolve
   - RULE-SET,telegram_ip,📲Telegram,no-resolve
-  # - RULE-SET,facebook_ip,📲Facebook,no-resolve
+  - RULE-SET,facebook_ip,📲Facebook,no-resolve
   # - RULE-SET,netflix_ip,🎥NETFLIX,no-resolve
   # - IP-ASN,8075,🖥微软,no-resolve
   # - IP-ASN,8070,🖥微软,no-resolve
@@ -451,6 +458,8 @@ rule-providers:
   speedtest: { <<: *mrs-domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/speedtest.mrs"}
   # Download: { <<: *yaml-classical, url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Download/Download.yaml"}
   lark: { <<: *mrs-domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/lark.mrs"}
+  notion: { <<: *mrs-domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/notion.mrs"}
+  canva: { <<: *mrs-domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/canva.mrs"}
 
 
   # 加密货币，支付，银行规则
@@ -470,6 +479,8 @@ rule-providers:
   facebook: {<<: *mrs-domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/facebook.mrs"}
   facebook_ip: {<<: *mrs-ipcidr, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/facebook.mrs"}
   reddit: {<<: *mrs-domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/reddit.mrs"}
+  quora: {<<: *mrs-domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/quora.mrs"}
+  instagram: {<<: *mrs-domain, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/instagram.mrs"}
 
   # AI规则
   # grok在twitter域名规则中
@@ -502,10 +513,6 @@ rule-providers:
 
 # mihomo官方mrs地址，替换private  geosite https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/private.mrs 
 # mihomo官方mrs地址，替换private  geoip https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/private.mrs 
-
-
-
-
 
 
 
