@@ -1,5 +1,5 @@
-#自定义直连域名
-# 测速
+#此文件为自定义直连域名
+#测速
 +.speedtest.im
 #重要网络服务商
 +.linode.com
@@ -18,7 +18,7 @@
 +.bestvm.cloud
 +.vpsmalaysia.com.my
 +.evoxt.com
-+.cctld.kg
+#+.cctld.kg
 #其他网络服务商
 +.kookeey.com
 +.cpu-world.com
